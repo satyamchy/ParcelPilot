@@ -18,8 +18,4 @@ RUN python -m app.ingestion.load_structured_data && \
 
 EXPOSE 10000
 
-EXPOSE 10000
-
-EXPOSE 10000
-
 CMD ["sh", "-c", "echo '=== STARTING PARCELPILOT FASTAPI ===' && uvicorn main:app --host 0.0.0.0 --port 10000 --log-level debug"]
