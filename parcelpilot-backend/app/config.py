@@ -22,8 +22,6 @@ class Settings(BaseSettings):
     sqlite_db_path: str = str(BASE_DIR / "data" / "db" / "parcelpilot.db")
     checkpoint_db_path: str = str(BASE_DIR / "data" / "db" / "checkpoints.sqlite")
 
-    # Fallback "now" for time-based questions if the workbook has no README
-    # sheet / snapshot row. Overwritten by ingest.py from the real workbook.
     default_snapshot_time: str = "2026-08-20T09:00:00"
 
     model_config = SettingsConfigDict(
@@ -33,8 +31,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Lower rank = more authoritative. A customer's own contract outranks
-# general policy; a deprecated policy is (near-)never authoritative.
 DOC_AUTHORITY_RANK = {
     "contract": 0,
     "cancellation_sop": 1,

@@ -8,7 +8,7 @@ purely over HTTP — no other coupling.
 ```bash
 npm install
 cp .env.example .env
-# edit .env: VITE_API_URL=http://localhost:8000 (or your deployed backend URL)
+# edit .env: VITE_API_URL=http://127.0.0.1:8000  (or your deployed backend URL)
 npm run dev
 ```
 

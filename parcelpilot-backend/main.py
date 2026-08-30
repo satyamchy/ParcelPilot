@@ -5,9 +5,6 @@ from app.routes import router
 
 app = FastAPI(title="ParcelPilot Support Agent")
 
-# Wide open for a hosted demo talking to a separate React frontend.
-# Tighten allow_origins to your actual frontend URL before submission if
-# you want to be stricter.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

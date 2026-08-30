@@ -5,8 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const ACCOUNTS = [
   { id: 'ACCT-001', name: 'Northstar Logistics' },
   { id: 'ACCT-002', name: 'LumenWorks' },
-  { id: 'ACCT-003', name: 'Beacon Retail' },
-  { id: 'ACCT-004', name: 'Axis Labs' },
+  
 ]
 
 function newThreadId() {
