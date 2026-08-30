@@ -83,9 +83,15 @@ def chat(req: ChatRequest):
     awaiting_confirmation = bool(state_after.next and "execute_action" in state_after.next)
     synthesis = result.get("synthesis") or {}
 
+    # tool_trace accumulates across the whole thread (it's an "add"-reducer
+    # field, needed so multiple nodes within one turn can each append to
+    # it) — slice off just this turn's new entries for the client.
+    prior_trace_len = len((existing.values or {}).get("tool_trace", []))
+    this_turn_trace = result.get("tool_trace", [])[prior_trace_len:]
+
     return ChatResponse(
         reply=result.get("final_reply", ""),
-        tool_trace=result.get("tool_trace", []),
+        tool_trace=this_turn_trace,
         pending_action=result.get("pending_action") if awaiting_confirmation else None,
         cited_sources=synthesis.get("cited_sources", []),
         confidence=synthesis.get("confidence"),
@@ -102,10 +108,12 @@ def confirm(req: ConfirmRequest):
         raise HTTPException(409, "No pending action awaiting confirmation on this thread.")
 
     graph.update_state(config, {"action_confirmed": req.confirmed})
+    prior_trace_len = len((state.values or {}).get("tool_trace", []))
     result = graph.invoke(None, config)
+    this_turn_trace = result.get("tool_trace", [])[prior_trace_len:]
 
     return ConfirmResponse(
         reply=result.get("final_reply", ""),
-        tool_trace=result.get("tool_trace", []),
+        tool_trace=this_turn_trace,
         action_result=result.get("action_result"),
     )

@@ -43,6 +43,14 @@ def search_documents(
     if user_ctx.role == Role.CUSTOMER:
         customer_id = user_ctx.account_id  # customers can't request another's contract
 
+    # The router LLM sometimes guesses a doc_type value that isn't one of
+    # our exact enum strings (e.g. "cancellation_policy" instead of
+    # "cancellation_sop"). Chroma's filter is an exact match, so an invalid
+    # guess would silently return zero results instead of falling back to
+    # an unfiltered search. Validate and drop rather than fail closed.
+    if doc_type is not None and doc_type not in DOC_AUTHORITY_RANK:
+        doc_type = None
+
     where = {"doc_type": doc_type} if doc_type else None
     results = _vectordb.similarity_search(query, k=k, filter=where)
 

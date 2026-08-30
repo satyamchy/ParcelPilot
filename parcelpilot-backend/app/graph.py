@@ -134,6 +134,11 @@ data — no outside knowledge.
 - If calc_result includes a cancellation or service-credit determination,
   use its reason and amount directly rather than recalculating — just
   explain it in plain language. Amounts are in INR.
+- If account_data lists multiple orders and the user's question doesn't
+  specify which shipment they mean (no order ID given), do NOT guess which
+  order matches — ask the customer to confirm the order ID. Set
+  confidence="uncertain" and needs_escalation=False in that case (it's a
+  clarifying question, not an escalation).
 - If a service credit's requires_manager_approval is true, mention that
   approval is needed before it's finalized.
 - List which source_file(s) you actually relied on in cited_sources.
@@ -162,13 +167,29 @@ def router_node(state: AgentState) -> dict:
         [("system", ROUTER_PROMPT), ("user", prompt)]
     )
     result = decision.model_dump()
-    # Safety net: if a specific order/ticket ID was extracted, always fetch
-    # structured data for it — don't rely solely on the LLM's judgment call
-    # about whether data lookup is "needed", since a mentioned ID almost
-    # always means a calculation is relevant to the answer.
     if result.get("order_id") or result.get("ticket_id"):
         result["needs_structured_data"] = True
-    return {"router_decision": result}
+
+    # Critical: reset all per-turn retrieval/reasoning fields at the start
+    # of every turn. Without this, a turn that doesn't need document or
+    # data retrieval would silently inherit the PREVIOUS turn's retrieved
+    # docs/order data (LangGraph persists state across turns on the same
+    # thread_id, and a node that doesn't run doesn't clear old values) —
+    # this is what caused an unrelated question to get answered with
+    # leftover Northstar/ORD-1001 context from an earlier turn.
+    return {
+        "router_decision": result,
+        "retrieved_docs": [],
+        "order_data": None,
+        "account_data": None,
+        "ticket_data": None,
+        "calc_result": None,
+        "reconciliation": None,
+        "synthesis": None,
+        "pending_action": None,
+        "action_confirmed": None,
+        "action_result": None,
+    }
 
 
 def retrieve_docs_node(state: AgentState) -> dict:
@@ -237,6 +258,18 @@ def retrieve_data_node(state: AgentState) -> dict:
                 trace.append({"tool": "list_orders_for_account", "input_summary": account_id,
                               "output_summary": f"{len(orders)} orders"})
                 account_data = {"account_id": account_id, "orders": orders}
+
+        # No specific order/ticket/account was named at all, but the query
+        # clearly needs data (e.g. "a pickup is 3 hours late, do I get a
+        # credit?" with no order ID given). For a customer we already know
+        # their account — pull their orders so the agent has something to
+        # reason over, and can ask which shipment if more than one could
+        # match, rather than fabricating or reusing stale context.
+        if not order_data and not ticket_data and not account_data and uctx.role == Role.CUSTOMER:
+            orders = list_orders_for_account(uctx, uctx.account_id)
+            trace.append({"tool": "list_orders_for_account", "input_summary": uctx.account_id,
+                          "output_summary": f"{len(orders)} orders (no specific order named by user)"})
+            account_data = {"account_id": uctx.account_id, "orders": orders}
 
     except AccessDeniedError as e:
         trace.append({"tool": "structured_data_lookup", "input_summary": str(rd), "output_summary": f"DENIED: {e}"})
