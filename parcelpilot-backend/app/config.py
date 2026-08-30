@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-20b"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     pdf_dir: str = str(BASE_DIR / "data" / "pdfs")
