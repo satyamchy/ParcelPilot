@@ -4,3 +4,4 @@
 __pycache__
 node_modules
 parcelpilot-frontend/node_modules
+parcelpilot-backend/venv
