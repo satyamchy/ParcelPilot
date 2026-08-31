@@ -1,6 +1,6 @@
 # AI Tool Usage
 
-I used **Claude (Anthropic)** as my primary AI coding assistant throughout
+I used **Claude (Anthropic)** as my primary AI coding assistant along with Chat-GPT  throughout
 this project, via its chat interface with code execution.
 
 ## How I used it

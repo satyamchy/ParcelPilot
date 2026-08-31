@@ -85,6 +85,7 @@ anomalies) — internal roles only.
 **`GET /health`**
 Liveness check.
 
+
 ## 7. Run the frontend
 
 ```bash
